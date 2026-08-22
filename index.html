@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lords Mobile — Таблиця Вбивств</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <header class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-red-500">⚔️ Lords Mobile — Статистика Вбивств</h1>
+                <p class="text-slate-400 text-sm">Зручний перегляд та фільтрація даних з Excel</p>
+            </div>
+            <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Client-Side (100% Безпечно)</span>
+        </header>
+
+        <!-- File Upload & Search -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 md:col-span-2">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Обрати .xlsx файл</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls" 
+                    class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500 cursor-pointer">
+            </div>
+
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-end">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Пошук за ніком</label>
+                <input type="text" id="searchInput" placeholder="Введіть нікнейм..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div id="statsGrid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                <p class="text-slate-400 text-xs">Всього гравців</p>
+                <p id="statTotal" class="text-xl font-bold text-slate-100">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                <p class="text-slate-400 text-xs">Сума вбивств</p>
+                <p id="statKills" class="text-xl font-bold text-red-400">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                <p class="text-slate-400 text-xs">Попередні вбивства</p>
+                <p id="statPrev" class="text-xl font-bold text-slate-300">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                <p class="text-slate-400 text-xs">Загальний приріст</p>
+                <p id="statDiff" class="text-xl font-bold text-emerald-400">0</p>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div id="tableContainer" class="hidden bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700">
+                        <tr>
+                            <th class="px-5 py-3">#</th>
+                            <th class="px-5 py-3">Нікнейм</th>
+                            <th class="px-5 py-3 text-right">Вбивства (G)</th>
+                            <th class="px-5 py-3 text-right">Попередні вбивства (H)</th>
+                            <th class="px-5 py-3 text-right">Різниця вбивств (I)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-700/50"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let rawData = [];
+
+        document.getElementById('excelFile').addEventListener('change', handleFile);
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                if (rawRows.length < 2) return;
+
+                // Базові індекси: B=1, G=6, H=7, I=8
+                let nameIdx = 1;
+                let killsIdx = 6;
+                let prevIdx = 7;
+                let diffIdx = 8;
+
+                // Пошук за заголовками
+                for (let r = 0; r < Math.min(rawRows.length, 5); r++) {
+                    const row = rawRows[r];
+                    for (let c = 0; c < row.length; c++) {
+                        const val = String(row[c]).trim().toLowerCase();
+                        if (val === 'user name' || val === 'name' || val === 'нікнейм') nameIdx = c;
+                        if (val === 'вбивства' || val.includes('kills')) killsIdx = c;
+                        if (val === 'попередні вбивства' || val.includes('previous')) prevIdx = c;
+                        if (val === 'різниця вбивств' || val.includes('difference')) diffIdx = c;
+                    }
+                }
+
+                rawData = [];
+
+                for (let i = 0; i < rawRows.length; i++) {
+                    const row = rawRows[i];
+                    if (!row || row.length <= nameIdx) continue;
+
+                    const name = String(row[nameIdx] || "").trim();
+                    
+                    if (!name || 
+                        name.toLowerCase() === 'user name' || 
+                        name.toLowerCase() === 'name' ||
+                        name.toLowerCase() === 'нікнейм' ||
+                        name.toLowerCase().includes('total') || 
+                        name.toLowerCase().includes('user id')) {
+                        continue;
+                    }
+
+                    const kills = parseFloat(row[killsIdx]) || 0;
+                    const prevKills = parseFloat(row[prevIdx]) || 0;
+                    
+                    let diff = parseFloat(row[diffIdx]);
+                    if (isNaN(diff)) {
+                        diff = kills - prevKills;
+                    }
+
+                    rawData.push({ name, kills, prevKills, diff });
+                }
+
+                document.getElementById('statsGrid').classList.remove('hidden');
+                document.getElementById('tableContainer').classList.remove('hidden');
+
+                renderTable();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderTable() {
+            if (!rawData.length) return;
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = rawData.filter(item => item.name.toLowerCase().includes(searchTerm));
+
+            // Загальна статистика
+            const totalKills = rawData.reduce((acc, curr) => acc + curr.kills, 0);
+            const totalPrev = rawData.reduce((acc, curr) => acc + curr.prevKills, 0);
+            const totalDiff = rawData.reduce((acc, curr) => acc + curr.diff, 0);
+
+            document.getElementById('statTotal').innerText = rawData.length;
+            document.getElementById('statKills').innerText = totalKills.toLocaleString();
+            document.getElementById('statPrev').innerText = totalPrev.toLocaleString();
+            document.getElementById('statDiff').innerText = (totalDiff >= 0 ? '+' : '') + totalDiff.toLocaleString();
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = filtered.map((item, idx) => `
+                <tr class="hover:bg-slate-700/30 transition-colors">
+                    <td class="px-5 py-3 text-slate-500 font-mono text-xs">${idx + 1}</td>
+                    <td class="px-5 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
+                    <td class="px-5 py-3 text-right font-mono text-slate-300">${item.kills.toLocaleString()}</td>
+                    <td class="px-5 py-3 text-right font-mono text-slate-400">${item.prevKills.toLocaleString()}</td>
+                    <td class="px-5 py-3 text-right font-mono font-bold ${item.diff > 0 ? 'text-emerald-400' : item.diff < 0 ? 'text-rose-400' : 'text-slate-400'}">
+                        ${item.diff > 0 ? '+' : ''}${item.diff.toLocaleString()}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
