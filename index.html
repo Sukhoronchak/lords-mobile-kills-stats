@@ -15,7 +15,7 @@
         <header class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-red-500">⚔️ Lords Mobile — Статистика Вбивств</h1>
-                <p class="text-slate-400 text-sm">Зручний перегляд та фільтрація даних з Excel</p>
+                <p class="text-slate-400 text-sm">Сортування від найбільшої різниці вбивств до найменшої</p>
             </div>
             <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Client-Side (100% Безпечно)</span>
         </header>
@@ -65,7 +65,7 @@
                             <th class="px-5 py-3">Нікнейм</th>
                             <th class="px-5 py-3 text-right">Вбивства (G)</th>
                             <th class="px-5 py-3 text-right">Попередні вбивства (H)</th>
-                            <th class="px-5 py-3 text-right">Різниця вбивств (I)</th>
+                            <th class="px-5 py-3 text-right text-amber-400">Різниця вбивств (I) ↓</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-700/50"></tbody>
@@ -95,21 +95,19 @@
                 const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
                 if (rawRows.length < 2) return;
 
-                // Базові індекси: B=1, G=6, H=7, I=8
                 let nameIdx = 1;
                 let killsIdx = 6;
                 let prevIdx = 7;
                 let diffIdx = 8;
 
-                // Пошук за заголовками
                 for (let r = 0; r < Math.min(rawRows.length, 5); r++) {
                     const row = rawRows[r];
                     for (let c = 0; c < row.length; c++) {
-                        const val = String(row[c]).trim().toLowerCase();
-                        if (val === 'user name' || val === 'name' || val === 'нікнейм') nameIdx = c;
-                        if (val === 'вбивства' || val.includes('kills')) killsIdx = c;
-                        if (val === 'попередні вбивства' || val.includes('previous')) prevIdx = c;
-                        if (val === 'різниця вбивств' || val.includes('difference')) diffIdx = c;
+                        const cellVal = String(row[c]).trim().toLowerCase();
+                        if (cellVal === 'user name' || cellVal === 'name' || cellVal === 'нікнейм') nameIdx = c;
+                        if (cellVal === 'вбивства' || cellVal.includes('kills')) killsIdx = c;
+                        if (cellVal === 'попередні вбивства' || cellVal.includes('previous')) prevIdx = c;
+                        if (cellVal === 'різниця вбивств' || cellVal.includes('difference')) diffIdx = c;
                     }
                 }
 
@@ -123,8 +121,8 @@
                     
                     if (!name || 
                         name.toLowerCase() === 'user name' || 
-                        name.toLowerCase() === 'name' ||
-                        name.toLowerCase() === 'нікнейм' ||
+                        name.toLowerCase() === 'name' || 
+                        name.toLowerCase() === 'нікнейм' || 
                         name.toLowerCase().includes('total') || 
                         name.toLowerCase().includes('user id')) {
                         continue;
@@ -141,6 +139,9 @@
                     rawData.push({ name, kills, prevKills, diff });
                 }
 
+                // Сортування від найбільшої різниці до найменшої
+                rawData.sort((a, b) => b.diff - a.diff);
+
                 document.getElementById('statsGrid').classList.remove('hidden');
                 document.getElementById('tableContainer').classList.remove('hidden');
 
@@ -155,7 +156,6 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filtered = rawData.filter(item => item.name.toLowerCase().includes(searchTerm));
 
-            // Загальна статистика
             const totalKills = rawData.reduce((acc, curr) => acc + curr.kills, 0);
             const totalPrev = rawData.reduce((acc, curr) => acc + curr.prevKills, 0);
             const totalDiff = rawData.reduce((acc, curr) => acc + curr.diff, 0);
