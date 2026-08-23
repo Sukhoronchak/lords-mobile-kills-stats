@@ -15,27 +15,27 @@
         <header class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-red-500">⚔️ Lords Mobile — Статистика Вбивств</h1>
-                <p class="text-slate-400 text-sm">Аналіз 1 файлу або порівняння динаміки 2 періодів</p>
+                <p class="text-slate-400 text-sm">Аналіз приросту кілів та аудит складу гільдії</p>
             </div>
             <span id="modeBadge" class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Очікування даних</span>
         </header>
 
         <!-- Upload Files Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- File 1 (Primary / Past) -->
+            <!-- File 1 -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-2">
                 <div class="flex items-center justify-between">
-                    <label class="text-sm font-semibold text-slate-200">📁 Звіт 1 (Основний / Минулий)</label>
+                    <label class="text-sm font-semibold text-slate-200">📁 Звіт 1 (Минулий тиждень / Базовий)</label>
                     <span id="statusFile1" class="text-xs text-rose-400">Не обрано</span>
                 </div>
                 <input type="file" id="fileInput1" accept=".xlsx, .xls" 
                     class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500 cursor-pointer">
             </div>
 
-            <!-- File 2 (Optional: Current) -->
+            <!-- File 2 -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-2">
                 <div class="flex items-center justify-between">
-                    <label class="text-sm font-semibold text-slate-200">📁 Звіт 2 (Поточний для порівняння — опціонально)</label>
+                    <label class="text-sm font-semibold text-slate-200">📁 Звіт 2 (Поточний тиждень для порівняння)</label>
                     <span id="statusFile2" class="text-xs text-slate-400">Не обрано</span>
                 </div>
                 <input type="file" id="fileInput2" accept=".xlsx, .xls" 
@@ -52,11 +52,13 @@
             </div>
 
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <label class="block text-sm font-medium text-slate-300 mb-1">Фільтр активності</label>
-                <select id="filterActivitySelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                <label class="block text-sm font-medium text-slate-300 mb-1">Фільтр категорій</label>
+                <select id="filterCategorySelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
                     <option value="all">Усі гравці</option>
                     <option value="active">Мають приріст (> 0)</option>
-                    <option value="zero">Без приросту (0 або менше)</option>
+                    <option value="zero">Без приросту (0 кілів)</option>
+                    <option value="new">🟢 Тільки новачки (прибули)</option>
+                    <option value="left">🔴 Тільки ті, хто вийшов</option>
                 </select>
             </div>
 
@@ -69,22 +71,26 @@
         </div>
 
         <!-- Stats Overview Cards -->
-        <div id="statsGrid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div id="statsGrid" class="hidden grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Всього гравців</p>
-                <p id="statTotal" class="text-xl font-bold text-slate-100">0</p>
+                <p class="text-slate-400 text-xs">Всього в списку</p>
+                <p id="statTotal" class="text-lg font-bold text-slate-100">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
                 <p class="text-slate-400 text-xs">Активні (> 0)</p>
-                <p id="statActive" class="text-xl font-bold text-emerald-400">0</p>
+                <p id="statActive" class="text-lg font-bold text-emerald-400">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
                 <p class="text-slate-400 text-xs">Без приросту (0)</p>
-                <p id="statZero" class="text-xl font-bold text-rose-400">0</p>
+                <p id="statZero" class="text-lg font-bold text-rose-400">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p id="statTotalDiffLabel" class="text-slate-400 text-xs">Загальний приріст</p>
-                <p id="statDiff" class="text-xl font-bold text-amber-400">0</p>
+                <p class="text-slate-400 text-xs">🟢 Новачки</p>
+                <p id="statNew" class="text-lg font-bold text-emerald-400">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                <p class="text-slate-400 text-xs">🔴 Вийшли</p>
+                <p id="statLeft" class="text-lg font-bold text-rose-400">0</p>
             </div>
         </div>
 
@@ -92,9 +98,7 @@
         <div id="tableContainer" class="hidden bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
-                    <thead id="tableHead" class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700 select-none">
-                        <!-- Динамічні заголовки в залежності від режиму -->
-                    </thead>
+                    <thead id="tableHead" class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700 select-none"></thead>
                     <tbody id="tableBody" class="divide-y divide-slate-700/50"></tbody>
                 </table>
             </div>
@@ -113,7 +117,7 @@
         document.getElementById('fileInput1').addEventListener('change', (e) => parseFile(e, 1));
         document.getElementById('fileInput2').addEventListener('change', (e) => parseFile(e, 2));
         document.getElementById('searchInput').addEventListener('input', renderTable);
-        document.getElementById('filterActivitySelect').addEventListener('change', renderTable);
+        document.getElementById('filterCategorySelect').addEventListener('change', renderTable);
 
         function parseFile(e, fileNumber) {
             const file = e.target.files[0];
@@ -185,35 +189,48 @@
             const badge = document.getElementById('modeBadge');
 
             if (isComparisonMode) {
-                badge.innerText = 'Режим: Порівняння 2 періодів';
+                badge.innerText = 'Режим: Порівняння 2 звітів';
                 badge.className = 'bg-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-full border border-amber-500/30 font-semibold';
                 
                 const allKeys = new Set([...file1Map.keys(), ...file2Map.keys()]);
                 combinedData = [];
 
                 allKeys.forEach(k => {
+                    const inF1 = file1Map.has(k);
+                    const inF2 = file2Map.has(k);
+
                     const f1 = file1Map.get(k);
                     const f2 = file2Map.get(k);
 
                     const name = f2 ? f2.name : f1.name;
                     const f1Diff = f1 ? f1.diff : 0;
                     const f2Diff = f2 ? f2.diff : 0;
-                    const growth = f2Diff - f1Diff; // Динаміка приросту
+                    const growth = inF1 && inF2 ? f2Diff - f1Diff : 0;
+
+                    let rosterStatus = 'member'; // звичайний учасник
+                    if (!inF1 && inF2) rosterStatus = 'new';   // є тільки у 2-му звіті
+                    if (inF1 && !inF2) rosterStatus = 'left';  // був у 1-му, зник у 2-му
 
                     combinedData.push({
                         name,
                         f1Diff,
                         f2Diff,
                         growth,
-                        diff: f2Diff // Основний показник для сортування за замовчуванням
+                        diff: f2Diff,
+                        rosterStatus,
+                        inF1,
+                        inF2
                     });
                 });
             } else {
-                badge.innerText = 'Режим: Перегляд 1 файлу';
+                badge.innerText = 'Режим: 1 звіт';
                 badge.className = 'bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-full border border-emerald-500/30 font-semibold';
 
                 const targetMap = file1Map.size > 0 ? file1Map : file2Map;
-                combinedData = Array.from(targetMap.values());
+                combinedData = Array.from(targetMap.values()).map(item => ({
+                    ...item,
+                    rosterStatus: 'member'
+                }));
             }
 
             document.getElementById('controlsPanel').classList.remove('hidden');
@@ -235,16 +252,20 @@
 
         function getFilteredData() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filterActivity = document.getElementById('filterActivitySelect').value;
+            const filterCategory = document.getElementById('filterCategorySelect').value;
             const isComparison = file1Map.size > 0 && file2Map.size > 0;
 
             return combinedData.filter(item => {
                 const matchesSearch = item.name.toLowerCase().includes(searchTerm);
                 if (!matchesSearch) return false;
 
+                if (filterCategory === 'new') return item.rosterStatus === 'new';
+                if (filterCategory === 'left') return item.rosterStatus === 'left';
+
                 const primaryVal = isComparison ? item.f2Diff : item.diff;
-                if (filterActivity === 'active') return primaryVal > 0;
-                if (filterActivity === 'zero') return primaryVal <= 0;
+                if (filterCategory === 'active') return item.rosterStatus !== 'left' && primaryVal > 0;
+                if (filterCategory === 'zero') return item.rosterStatus !== 'left' && primaryVal <= 0;
+
                 return true;
             });
         }
@@ -273,58 +294,72 @@
             if (isComparison) {
                 thead.innerHTML = `
                     <tr>
-                        <th class="px-5 py-3 text-center w-12">#</th>
-                        <th class="px-5 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм${arrow('name')}</th>
-                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('f1Diff')">Звіт 1 (+Кіли)${arrow('f1Diff')}</th>
-                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('f2Diff')">Звіт 2 (+Кіли)${arrow('f2Diff')}</th>
-                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('growth')">Динаміка${arrow('growth')}</th>
+                        <th class="px-4 py-3 text-center w-12">#</th>
+                        <th class="px-4 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм${arrow('name')}</th>
+                        <th class="px-4 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('f1Diff')">Звіт 1 (+Кіли)${arrow('f1Diff')}</th>
+                        <th class="px-4 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('f2Diff')">Звіт 2 (+Кіли)${arrow('f2Diff')}</th>
+                        <th class="px-4 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('growth')">Динаміка${arrow('growth')}</th>
+                        <th class="px-4 py-3 text-center">Статус складу</th>
                     </tr>
                 `;
             } else {
                 thead.innerHTML = `
                     <tr>
-                        <th class="px-5 py-3 text-center w-12">#</th>
-                        <th class="px-5 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм${arrow('name')}</th>
-                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('kills')">Вбивства (G)${arrow('kills')}</th>
-                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('prevKills')">Попередні (H)${arrow('prevKills')}</th>
-                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('diff')">Різниця (I)${arrow('diff')}</th>
+                        <th class="px-4 py-3 text-center w-12">#</th>
+                        <th class="px-4 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм${arrow('name')}</th>
+                        <th class="px-4 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('kills')">Вбивства (G)${arrow('kills')}</th>
+                        <th class="px-4 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('prevKills')">Попередні (H)${arrow('prevKills')}</th>
+                        <th class="px-4 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('diff')">Різниця (I)${arrow('diff')}</th>
                     </tr>
                 `;
             }
 
             // Статистика
-            const primaryArray = isComparison ? combinedData.map(d => d.f2Diff) : combinedData.map(d => d.diff);
+            const newCount = combinedData.filter(d => d.rosterStatus === 'new').length;
+            const leftCount = combinedData.filter(d => d.rosterStatus === 'left').length;
+            const currentMembers = combinedData.filter(d => d.rosterStatus !== 'left');
+            
+            const primaryArray = isComparison ? currentMembers.map(d => d.f2Diff) : currentMembers.map(d => d.diff);
             const activeCount = primaryArray.filter(v => v > 0).length;
             const zeroCount = primaryArray.filter(v => v <= 0).length;
-            const totalDiffSum = primaryArray.reduce((a, b) => a + b, 0);
 
             document.getElementById('statTotal').innerText = combinedData.length;
             document.getElementById('statActive').innerText = activeCount;
             document.getElementById('statZero').innerText = zeroCount;
-            document.getElementById('statDiff').innerText = (totalDiffSum >= 0 ? '+' : '') + totalDiffSum.toLocaleString();
+            document.getElementById('statNew').innerText = newCount;
+            document.getElementById('statLeft').innerText = leftCount;
 
             // Тіло таблиці
             const tbody = document.getElementById('tableBody');
             if (isComparison) {
                 tbody.innerHTML = filtered.map((p, idx) => `
-                    <tr class="hover:bg-slate-700/30 transition-colors">
-                        <td class="px-5 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
-                        <td class="px-5 py-3 font-medium text-white">${escapeHtml(p.name)}</td>
-                        <td class="px-5 py-3 text-right font-mono text-slate-300">${p.f1Diff > 0 ? '+' : ''}${p.f1Diff.toLocaleString()}</td>
-                        <td class="px-5 py-3 text-right font-mono font-bold ${p.f2Diff > 0 ? 'text-emerald-400' : 'text-slate-400'}">${p.f2Diff > 0 ? '+' : ''}${p.f2Diff.toLocaleString()}</td>
-                        <td class="px-5 py-3 text-right font-mono font-semibold ${p.growth > 0 ? 'text-emerald-400' : p.growth < 0 ? 'text-rose-400' : 'text-slate-400'}">
-                            ${p.growth > 0 ? '+' : ''}${p.growth.toLocaleString()}
+                    <tr class="hover:bg-slate-700/30 transition-colors ${p.rosterStatus === 'left' ? 'opacity-40 bg-rose-950/10' : p.rosterStatus === 'new' ? 'bg-emerald-950/10' : ''}">
+                        <td class="px-4 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
+                        <td class="px-4 py-3 font-medium text-white ${p.rosterStatus === 'left' ? 'line-through text-slate-400' : ''}">${escapeHtml(p.name)}</td>
+                        <td class="px-4 py-3 text-right font-mono text-slate-400">${p.inF1 ? (p.f1Diff > 0 ? '+' : '') + p.f1Diff.toLocaleString() : '—'}</td>
+                        <td class="px-4 py-3 text-right font-mono font-bold ${p.inF2 ? (p.f2Diff > 0 ? 'text-emerald-400' : 'text-slate-400') : 'text-rose-400'}">
+                            ${p.inF2 ? (p.f2Diff > 0 ? '+' : '') + p.f2Diff.toLocaleString() : '—'}
+                        </td>
+                        <td class="px-4 py-3 text-right font-mono font-semibold ${p.inF1 && p.inF2 ? (p.growth > 0 ? 'text-emerald-400' : p.growth < 0 ? 'text-rose-400' : 'text-slate-400') : 'text-slate-500'}">
+                            ${p.inF1 && p.inF2 ? (p.growth > 0 ? '+' : '') + p.growth.toLocaleString() : '—'}
+                        </td>
+                        <td class="px-4 py-3 text-center text-xs">
+                            ${p.rosterStatus === 'new' 
+                                ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">🟢 Новачок</span>`
+                                : p.rosterStatus === 'left'
+                                ? `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">🔴 Вийшов</span>`
+                                : `<span class="text-slate-500 text-xs">У складі</span>`}
                         </td>
                     </tr>
                 `).join('');
             } else {
                 tbody.innerHTML = filtered.map((p, idx) => `
                     <tr class="hover:bg-slate-700/30 transition-colors">
-                        <td class="px-5 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
-                        <td class="px-5 py-3 font-medium text-white">${escapeHtml(p.name)}</td>
-                        <td class="px-5 py-3 text-right font-mono text-slate-300">${p.kills.toLocaleString()}</td>
-                        <td class="px-5 py-3 text-right font-mono text-slate-400">${p.prevKills.toLocaleString()}</td>
-                        <td class="px-5 py-3 text-right font-mono font-bold ${p.diff > 0 ? 'text-emerald-400' : p.diff < 0 ? 'text-rose-400' : 'text-slate-400'}">
+                        <td class="px-4 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
+                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(p.name)}</td>
+                        <td class="px-4 py-3 text-right font-mono text-slate-300">${p.kills.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right font-mono text-slate-400">${p.prevKills.toLocaleString()}</td>
+                        <td class="px-4 py-3 text-right font-mono font-bold ${p.diff > 0 ? 'text-emerald-400' : p.diff < 0 ? 'text-rose-400' : 'text-slate-400'}">
                             ${p.diff > 0 ? '+' : ''}${p.diff.toLocaleString()}
                         </td>
                     </tr>
@@ -337,13 +372,23 @@
             if (!filtered.length) return alert('Список порожній!');
 
             const isComparison = file1Map.size > 0 && file2Map.size > 0;
-            let text = isComparison 
-                ? `⚔️ *ПОРІВНЯННЯ РІЗНИЦІ ВБИВСТВ (2 ПЕРІОДИ)*\n----------------------------------\n`
-                : `⚔️ *СТАТИСТИКА ВБИВСТВ*\n----------------------------------\n`;
+            const filterCategory = document.getElementById('filterCategorySelect').value;
+
+            let title = '⚔️ СТАТИСТИКА ВБИВСТВ';
+            if (filterCategory === 'new') title = '🟢 НОВАЧКИ ГІЛЬДІЇ (НОВІ УЧАСНИКИ)';
+            if (filterCategory === 'left') title = '🔴 ГРАВЦІ, ЯКІ ПОКИНУЛИ ГІЛЬДІЮ';
+
+            let text = `${title}\n----------------------------------\n`;
 
             filtered.forEach((p, i) => {
                 if (isComparison) {
-                    text += `${i + 1}. ${p.name} — Звіт 1: +${p.f1Diff.toLocaleString()} | Звіт 2: +${p.f2Diff.toLocaleString()} (${p.growth >= 0 ? '+' : ''}${p.growth.toLocaleString()})\n`;
+                    if (p.rosterStatus === 'new') {
+                        text += `${i + 1}. ${p.name} — Новачок (+${p.f2Diff.toLocaleString()} кілів)\n`;
+                    } else if (p.rosterStatus === 'left') {
+                        text += `${i + 1}. ${p.name} — Вийшов з гільдії (було: +${p.f1Diff.toLocaleString()})\n`;
+                    } else {
+                        text += `${i + 1}. ${p.name} — Звіт 1: +${p.f1Diff.toLocaleString()} | Звіт 2: +${p.f2Diff.toLocaleString()} (${p.growth >= 0 ? '+' : ''}${p.growth.toLocaleString()})\n`;
+                    }
                 } else {
                     text += `${i + 1}. ${p.name} – ${p.diff > 0 ? '+' : ''}${p.diff.toLocaleString()}\n`;
                 }
