@@ -15,23 +15,34 @@
         <header class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-red-500">⚔️ Lords Mobile — Статистика Вбивств</h1>
-                <p class="text-slate-400 text-sm">Сортування від найбільшої різниці вбивств до найменшої</p>
+                <p class="text-slate-400 text-sm">Перегляд даних з гнучким сортуванням за будь-яким стовпцем</p>
             </div>
             <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Client-Side (100% Безпечно)</span>
         </header>
 
-        <!-- File Upload & Search -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Controls Panel -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- File Upload -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 md:col-span-2">
                 <label class="block text-sm font-medium text-slate-300 mb-2">Обрати .xlsx файл</label>
                 <input type="file" id="excelFile" accept=".xlsx, .xls" 
                     class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500 cursor-pointer">
             </div>
 
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-end">
+            <!-- Search -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                 <label class="block text-sm font-medium text-slate-300 mb-2">Пошук за ніком</label>
-                <input type="text" id="searchInput" placeholder="Введіть нікнейм..." 
+                <input type="text" id="searchInput" placeholder="Введіть нік..." 
                     class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+            </div>
+
+            <!-- Sort Direction Dropdown -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Напрямок сортування</label>
+                <select id="sortOrderSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                    <option value="desc">Від найбільшого до найменшого (↓)</option>
+                    <option value="asc">Від найменшого до найбільшого (↑)</option>
+                </select>
             </div>
         </div>
 
@@ -59,13 +70,33 @@
         <div id="tableContainer" class="hidden bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700">
+                    <thead class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700 select-none">
                         <tr>
-                            <th class="px-5 py-3">#</th>
-                            <th class="px-5 py-3">Нікнейм</th>
-                            <th class="px-5 py-3 text-right">Вбивства (G)</th>
-                            <th class="px-5 py-3 text-right">Попередні вбивства (H)</th>
-                            <th class="px-5 py-3 text-right text-amber-400">Різниця вбивств (I) ↓</th>
+                            <th class="px-5 py-3 text-center">#</th>
+                            <th class="px-5 py-3 cursor-pointer hover:text-white transition-colors" onclick="setSortKey('name')">
+                                <div class="flex items-center gap-1">
+                                    <span>Нікнейм</span>
+                                    <span id="sort_name" class="text-xs"></span>
+                                </div>
+                            </th>
+                            <th class="px-5 py-3 text-right cursor-pointer hover:text-white transition-colors" onclick="setSortKey('kills')">
+                                <div class="flex items-center justify-end gap-1">
+                                    <span>Вбивства (G)</span>
+                                    <span id="sort_kills" class="text-xs"></span>
+                                </div>
+                            </th>
+                            <th class="px-5 py-3 text-right cursor-pointer hover:text-white transition-colors" onclick="setSortKey('prevKills')">
+                                <div class="flex items-center justify-end gap-1">
+                                    <span>Попередні вбивства (H)</span>
+                                    <span id="sort_prevKills" class="text-xs"></span>
+                                </div>
+                            </th>
+                            <th class="px-5 py-3 text-right cursor-pointer hover:text-white transition-colors" onclick="setSortKey('diff')">
+                                <div class="flex items-center justify-end gap-1">
+                                    <span>Різниця вбивств (I)</span>
+                                    <span id="sort_diff" class="text-xs"></span>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-700/50"></tbody>
@@ -77,9 +108,15 @@
 
     <script>
         let rawData = [];
+        let currentSortKey = 'diff'; // За замовчуванням сортуємо за різницею
+        let currentSortOrder = 'desc'; // desc = від найбільшого, asc = від найменшого
 
         document.getElementById('excelFile').addEventListener('change', handleFile);
         document.getElementById('searchInput').addEventListener('input', renderTable);
+        document.getElementById('sortOrderSelect').addEventListener('change', (e) => {
+            currentSortOrder = e.target.value;
+            renderTable();
+        });
 
         function handleFile(e) {
             const file = e.target.files[0];
@@ -139,9 +176,6 @@
                     rawData.push({ name, kills, prevKills, diff });
                 }
 
-                // Сортування від найбільшої різниці до найменшої
-                rawData.sort((a, b) => b.diff - a.diff);
-
                 document.getElementById('statsGrid').classList.remove('hidden');
                 document.getElementById('tableContainer').classList.remove('hidden');
 
@@ -150,12 +184,47 @@
             reader.readAsArrayBuffer(file);
         }
 
+        function setSortKey(key) {
+            if (currentSortKey === key) {
+                // Перемикаємо напрямок, якщо клікнули по тому ж стовпчику
+                currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
+                document.getElementById('sortOrderSelect').value = currentSortOrder;
+            } else {
+                currentSortKey = key;
+            }
+            renderTable();
+        }
+
         function renderTable() {
             if (!rawData.length) return;
 
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = rawData.filter(item => item.name.toLowerCase().includes(searchTerm));
+            let filtered = rawData.filter(item => item.name.toLowerCase().includes(searchTerm));
 
+            // Оновлення індикаторів сортування в шапці
+            ['name', 'kills', 'prevKills', 'diff'].forEach(k => {
+                const el = document.getElementById(`sort_${k}`);
+                if (el) {
+                    el.innerText = currentSortKey === k ? (currentSortOrder === 'desc' ? '▼' : '▲') : '';
+                    el.className = currentSortKey === k ? 'text-amber-400 text-xs' : 'text-slate-600 text-xs';
+                }
+            });
+
+            // Сортування
+            filtered.sort((a, b) => {
+                let valA = a[currentSortKey];
+                let valB = b[currentSortKey];
+
+                if (typeof valA === 'string') {
+                    return currentSortOrder === 'asc' 
+                        ? valA.localeCompare(valB) 
+                        : valB.localeCompare(valA);
+                }
+
+                return currentSortOrder === 'asc' ? valA - valB : valB - valA;
+            });
+
+            // Підрахунок загальної статистики
             const totalKills = rawData.reduce((acc, curr) => acc + curr.kills, 0);
             const totalPrev = rawData.reduce((acc, curr) => acc + curr.prevKills, 0);
             const totalDiff = rawData.reduce((acc, curr) => acc + curr.diff, 0);
@@ -168,7 +237,7 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = filtered.map((item, idx) => `
                 <tr class="hover:bg-slate-700/30 transition-colors">
-                    <td class="px-5 py-3 text-slate-500 font-mono text-xs">${idx + 1}</td>
+                    <td class="px-5 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
                     <td class="px-5 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
                     <td class="px-5 py-3 text-right font-mono text-slate-300">${item.kills.toLocaleString()}</td>
                     <td class="px-5 py-3 text-right font-mono text-slate-400">${item.prevKills.toLocaleString()}</td>
