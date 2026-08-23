@@ -9,21 +9,21 @@
 </head>
 
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-6">
         
         <!-- Header -->
         <header class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-red-500">⚔️ Lords Mobile — Статистика Вбивств</h1>
-                <p class="text-slate-400 text-sm">Перегляд даних з гнучким сортуванням за будь-яким стовпцем</p>
+                <p class="text-slate-400 text-sm">Фільтрація та сортування за приростом кілів</p>
             </div>
             <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Client-Side (100% Безпечно)</span>
         </header>
 
         <!-- Controls Panel -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- File Upload -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 md:col-span-2">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 sm:col-span-2">
                 <label class="block text-sm font-medium text-slate-300 mb-2">Обрати .xlsx файл</label>
                 <input type="file" id="excelFile" accept=".xlsx, .xls" 
                     class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500 cursor-pointer">
@@ -36,12 +36,13 @@
                     class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
             </div>
 
-            <!-- Sort Direction Dropdown -->
+            <!-- Filter Status Dropdown -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <label class="block text-sm font-medium text-slate-300 mb-2">Напрямок сортування</label>
-                <select id="sortOrderSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
-                    <option value="desc">Від найбільшого до найменшого (↓)</option>
-                    <option value="asc">Від найменшого до найбільшого (↑)</option>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Фільтр активності</label>
+                <select id="filterStatusSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
+                    <option value="all">Всі гравці</option>
+                    <option value="active">Набили хоча б 1 кіл (> 0)</option>
+                    <option value="zero">Нічого не набили (0 або менше)</option>
                 </select>
             </div>
         </div>
@@ -53,17 +54,26 @@
                 <p id="statTotal" class="text-xl font-bold text-slate-100">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Сума вбивств</p>
-                <p id="statKills" class="text-xl font-bold text-red-400">0</p>
+                <p class="text-slate-400 text-xs">Активні (> 0 кілів)</p>
+                <p id="statActive" class="text-xl font-bold text-emerald-400">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Попередні вбивства</p>
-                <p id="statPrev" class="text-xl font-bold text-slate-300">0</p>
+                <p class="text-slate-400 text-xs">Не набили (0 кілів)</p>
+                <p id="statZero" class="text-xl font-bold text-rose-400">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
                 <p class="text-slate-400 text-xs">Загальний приріст</p>
-                <p id="statDiff" class="text-xl font-bold text-emerald-400">0</p>
+                <p id="statDiff" class="text-xl font-bold text-amber-400">0</p>
             </div>
+        </div>
+
+        <!-- Table Controls & Export -->
+        <div id="tableHeaderPanel" class="hidden flex flex-wrap justify-between items-center gap-3">
+            <p class="text-xs text-slate-400">💡 Клікніть на заголовок стовпця для зміни напрямку сортування (▲ / ▼)</p>
+            <button id="copyListBtn" onclick="copyCurrentList()" 
+                class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+                📋 Скопіювати поточний список
+            </button>
         </div>
 
         <!-- Table -->
@@ -72,7 +82,7 @@
                 <table class="w-full text-left text-sm text-slate-300">
                     <thead class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700 select-none">
                         <tr>
-                            <th class="px-5 py-3 text-center">#</th>
+                            <th class="px-5 py-3 text-center w-12">#</th>
                             <th class="px-5 py-3 cursor-pointer hover:text-white transition-colors" onclick="setSortKey('name')">
                                 <div class="flex items-center gap-1">
                                     <span>Нікнейм</span>
@@ -97,6 +107,7 @@
                                     <span id="sort_diff" class="text-xs"></span>
                                 </div>
                             </th>
+                            <th class="px-5 py-3 text-center">Статус</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-700/50"></tbody>
@@ -108,15 +119,12 @@
 
     <script>
         let rawData = [];
-        let currentSortKey = 'diff'; // За замовчуванням сортуємо за різницею
-        let currentSortOrder = 'desc'; // desc = від найбільшого, asc = від найменшого
+        let currentSortKey = 'diff';
+        let currentSortOrder = 'desc';
 
         document.getElementById('excelFile').addEventListener('change', handleFile);
         document.getElementById('searchInput').addEventListener('input', renderTable);
-        document.getElementById('sortOrderSelect').addEventListener('change', (e) => {
-            currentSortOrder = e.target.value;
-            renderTable();
-        });
+        document.getElementById('filterStatusSelect').addEventListener('change', renderTable);
 
         function handleFile(e) {
             const file = e.target.files[0];
@@ -177,6 +185,7 @@
                 }
 
                 document.getElementById('statsGrid').classList.remove('hidden');
+                document.getElementById('tableHeaderPanel').classList.remove('hidden');
                 document.getElementById('tableContainer').classList.remove('hidden');
 
                 renderTable();
@@ -186,22 +195,34 @@
 
         function setSortKey(key) {
             if (currentSortKey === key) {
-                // Перемикаємо напрямок, якщо клікнули по тому ж стовпчику
                 currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
-                document.getElementById('sortOrderSelect').value = currentSortOrder;
             } else {
                 currentSortKey = key;
+                currentSortOrder = 'desc';
             }
             renderTable();
+        }
+
+        function getFilteredData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterStatus = document.getElementById('filterStatusSelect').value;
+
+            return rawData.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+                if (!matchesSearch) return false;
+
+                if (filterStatus === 'active') return item.diff > 0;
+                if (filterStatus === 'zero') return item.diff <= 0;
+                return true;
+            });
         }
 
         function renderTable() {
             if (!rawData.length) return;
 
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            let filtered = rawData.filter(item => item.name.toLowerCase().includes(searchTerm));
+            let filtered = getFilteredData();
 
-            // Оновлення індикаторів сортування в шапці
+            // Оновлення стрілочок сортування
             ['name', 'kills', 'prevKills', 'diff'].forEach(k => {
                 const el = document.getElementById(`sort_${k}`);
                 if (el) {
@@ -224,14 +245,14 @@
                 return currentSortOrder === 'asc' ? valA - valB : valB - valA;
             });
 
-            // Підрахунок загальної статистики
-            const totalKills = rawData.reduce((acc, curr) => acc + curr.kills, 0);
-            const totalPrev = rawData.reduce((acc, curr) => acc + curr.prevKills, 0);
+            // Загальна статистика за всіма завантаженими гравцями
+            const activeCount = rawData.filter(p => p.diff > 0).length;
+            const zeroCount = rawData.filter(p => p.diff <= 0).length;
             const totalDiff = rawData.reduce((acc, curr) => acc + curr.diff, 0);
 
             document.getElementById('statTotal').innerText = rawData.length;
-            document.getElementById('statKills').innerText = totalKills.toLocaleString();
-            document.getElementById('statPrev').innerText = totalPrev.toLocaleString();
+            document.getElementById('statActive').innerText = activeCount;
+            document.getElementById('statZero').innerText = zeroCount;
             document.getElementById('statDiff').innerText = (totalDiff >= 0 ? '+' : '') + totalDiff.toLocaleString();
 
             const tbody = document.getElementById('tableBody');
@@ -244,8 +265,39 @@
                     <td class="px-5 py-3 text-right font-mono font-bold ${item.diff > 0 ? 'text-emerald-400' : item.diff < 0 ? 'text-rose-400' : 'text-slate-400'}">
                         ${item.diff > 0 ? '+' : ''}${item.diff.toLocaleString()}
                     </td>
+                    <td class="px-5 py-3 text-center">
+                        ${item.diff > 0 
+                            ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">Активний</span>` 
+                            : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 кілів</span>`}
+                    </td>
                 </tr>
             `).join('');
+        }
+
+        function copyCurrentList() {
+            const filtered = getFilteredData();
+            if (!filtered.length) {
+                alert('Список порожній!');
+                return;
+            }
+
+            const filterStatus = document.getElementById('filterStatusSelect').value;
+            let headerText = '⚔️ СПИСОК ГРАВЦІВ ЗА РІЗНИЦЕЮ ВБИВСТВ';
+            if (filterStatus === 'active') headerText = '⚔️ СПИСОК АКТИВНИХ БІЙЦІВ (> 0 КІЛІВ)';
+            if (filterStatus === 'zero') headerText = '⚠️ СПИСОК БІЙЦІВ З 0 ПРИРОСТОМ КІЛІВ';
+
+            let text = `${headerText}\n----------------------------------\n`;
+            filtered.forEach((p, i) => {
+                text += `${i + 1}. ${p.name} – ${p.diff > 0 ? '+' : ''}${p.diff.toLocaleString()}\n`;
+            });
+            text += `----------------------------------\nВсього: ${filtered.length} осіб.`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyListBtn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Скопійовано!';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            });
         }
 
         function escapeHtml(text) {
