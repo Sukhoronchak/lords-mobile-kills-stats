@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lords Mobile — Порівняння 2 Тижнів</title>
+    <title>Lords Mobile — Статистика Вбивств</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -14,103 +14,86 @@
         <!-- Header -->
         <header class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-amber-400">📊 Lords Mobile — Порівняння 2 Тижнів</h1>
-                <p class="text-slate-400 text-sm">Аналіз динаміки мисливців: минулий тиждень vs поточний</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-red-500">⚔️ Lords Mobile — Статистика Вбивств</h1>
+                <p class="text-slate-400 text-sm">Аналіз 1 файлу або порівняння динаміки 2 періодів</p>
             </div>
-            <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Client-Side (100% Безпечно)</span>
+            <span id="modeBadge" class="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-full border border-slate-700">Очікування даних</span>
         </header>
 
         <!-- Upload Files Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- File 1: Past Week -->
+            <!-- File 1 (Primary / Past) -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-2">
                 <div class="flex items-center justify-between">
-                    <label class="text-sm font-semibold text-slate-300">📁 1. Звіт за МИНУЛИЙ тиждень</label>
-                    <span id="statusFile1" class="text-xs text-rose-400">Очікується файл</span>
+                    <label class="text-sm font-semibold text-slate-200">📁 Звіт 1 (Основний / Минулий)</label>
+                    <span id="statusFile1" class="text-xs text-rose-400">Не обрано</span>
                 </div>
-                <input type="file" id="filePast" accept=".xlsx, .xls" 
-                    class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600 cursor-pointer">
+                <input type="file" id="fileInput1" accept=".xlsx, .xls" 
+                    class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500 cursor-pointer">
             </div>
 
-            <!-- File 2: Current Week -->
+            <!-- File 2 (Optional: Current) -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-2">
                 <div class="flex items-center justify-between">
-                    <label class="text-sm font-semibold text-slate-300">📁 2. Звіт за ПОТОЧНИЙ тиждень</label>
-                    <span id="statusFile2" class="text-xs text-rose-400">Очікується файл</span>
+                    <label class="text-sm font-semibold text-slate-200">📁 Звіт 2 (Поточний для порівняння — опціонально)</label>
+                    <span id="statusFile2" class="text-xs text-slate-400">Не обрано</span>
                 </div>
-                <input type="file" id="fileCurrent" accept=".xlsx, .xls" 
-                    class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-900 hover:file:bg-amber-400 cursor-pointer">
+                <input type="file" id="fileInput2" accept=".xlsx, .xls" 
+                    class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600 cursor-pointer">
             </div>
         </div>
 
-        <!-- Norm and Filters Bar -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <label for="normInput" class="block text-sm font-medium text-slate-300 mb-1">Норма балів (Points)</label>
-                <input type="number" id="normInput" value="42" min="1" 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:border-amber-500">
-            </div>
-
+        <!-- Search & Filter Controls -->
+        <div id="controlsPanel" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                 <label class="block text-sm font-medium text-slate-300 mb-1">Пошук за ніком</label>
-                <input type="text" id="searchInput" placeholder="Введіть нікнейм..." 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                <input type="text" id="searchInput" placeholder="Введіть нік..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
             </div>
 
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <label class="block text-sm font-medium text-slate-300 mb-1">Категорія динаміки</label>
-                <select id="filterTrendSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-amber-500">
+                <label class="block text-sm font-medium text-slate-300 mb-1">Фільтр активності</label>
+                <select id="filterActivitySelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500">
                     <option value="all">Усі гравці</option>
-                    <option value="repeat_debtors">🚨 Хронічні боржники (борг обидва тижні)</option>
-                    <option value="improved">📈 Покращили результат (ріст балів)</option>
-                    <option value="worsened">📉 Погіршили результат (спад балів)</option>
-                    <option value="new_debtors">⚠️ Нові боржники (були ОК, стали в боргу)</option>
+                    <option value="active">Мають приріст (> 0)</option>
+                    <option value="zero">Без приросту (0 або менше)</option>
                 </select>
+            </div>
+
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-end">
+                <button id="copyListBtn" onclick="copyTableData()" 
+                    class="w-full bg-slate-700 hover:bg-slate-600 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    📋 Скопіювати поточний список
+                </button>
             </div>
         </div>
 
         <!-- Stats Overview Cards -->
         <div id="statsGrid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Порівняно гравців</p>
+                <p class="text-slate-400 text-xs">Всього гравців</p>
                 <p id="statTotal" class="text-xl font-bold text-slate-100">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Хронічні боржники (2 тижні)</p>
-                <p id="statRepeatDebtors" class="text-xl font-bold text-rose-500">0</p>
+                <p class="text-slate-400 text-xs">Активні (> 0)</p>
+                <p id="statActive" class="text-xl font-bold text-emerald-400">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Покращили активність</p>
-                <p id="statGrowth" class="text-xl font-bold text-emerald-400">0</p>
+                <p class="text-slate-400 text-xs">Без приросту (0)</p>
+                <p id="statZero" class="text-xl font-bold text-rose-400">0</p>
             </div>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                <p class="text-slate-400 text-xs">Середня зміна гільдії</p>
-                <p id="statAvgDiff" class="text-xl font-bold text-amber-400">0</p>
+                <p id="statTotalDiffLabel" class="text-slate-400 text-xs">Загальний приріст</p>
+                <p id="statDiff" class="text-xl font-bold text-amber-400">0</p>
             </div>
         </div>
 
-        <!-- Actions Panel -->
-        <div id="actionsPanel" class="hidden flex flex-wrap justify-between items-center gap-3">
-            <p class="text-xs text-slate-400">💡 Клікніть на заголовок для сортування за відповідною колонкою</p>
-            <button id="copyRepeatBtn" onclick="copyRepeatDebtors()" 
-                class="bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center gap-2">
-                📋 Скопіювати хронічних боржників (2 тижні)
-            </button>
-        </div>
-
-        <!-- Comparison Table -->
+        <!-- Table View -->
         <div id="tableContainer" class="hidden bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700 select-none">
-                        <tr>
-                            <th class="px-4 py-3 text-center">#</th>
-                            <th class="px-4 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм</th>
-                            <th class="px-4 py-3 text-center cursor-pointer hover:text-white" onclick="setSortKey('pastPoints')">Минулий тижд.</th>
-                            <th class="px-4 py-3 text-center cursor-pointer hover:text-white" onclick="setSortKey('currentPoints')">Поточний тижд.</th>
-                            <th class="px-4 py-3 text-center cursor-pointer hover:text-white" onclick="setSortKey('diff')">Динаміка</th>
-                            <th class="px-4 py-3 text-center">Статус</th>
-                        </tr>
+                    <thead id="tableHead" class="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700 select-none">
+                        <!-- Динамічні заголовки в залежності від режиму -->
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-700/50"></tbody>
                 </table>
@@ -120,20 +103,19 @@
     </div>
 
     <script>
-        let pastDataMap = new Map();
-        let currentDataMap = new Map();
-        let comparisonList = [];
+        let file1Map = new Map();
+        let file2Map = new Map();
+        let combinedData = [];
 
         let currentSortKey = 'diff';
-        let currentSortOrder = 'asc'; // За замовчуванням показуємо тих, у кого найбільший спад
+        let currentSortOrder = 'desc';
 
-        document.getElementById('filePast').addEventListener('change', (e) => handleSingleFile(e, 'past'));
-        document.getElementById('fileCurrent').addEventListener('change', (e) => handleSingleFile(e, 'current'));
-        document.getElementById('normInput').addEventListener('input', processComparison);
+        document.getElementById('fileInput1').addEventListener('change', (e) => parseFile(e, 1));
+        document.getElementById('fileInput2').addEventListener('change', (e) => parseFile(e, 2));
         document.getElementById('searchInput').addEventListener('input', renderTable);
-        document.getElementById('filterTrendSelect').addEventListener('change', renderTable);
+        document.getElementById('filterActivitySelect').addEventListener('change', renderTable);
 
-        function handleSingleFile(e, type) {
+        function parseFile(e, fileNumber) {
             const file = e.target.files[0];
             if (!file) return;
 
@@ -145,85 +127,97 @@
                 const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
                 let nameIdx = 1;
-                let pointsIdx = 18; // Стовпчик S або Points (Hunt)
+                let killsIdx = 6;
+                let prevIdx = 7;
+                let diffIdx = 8;
 
                 for (let r = 0; r < Math.min(rawRows.length, 5); r++) {
                     const row = rawRows[r];
                     for (let c = 0; c < row.length; c++) {
-                        const cellVal = String(row[c]).trim().toLowerCase();
-                        if (cellVal === 'user name' || cellVal === 'name') nameIdx = c;
-                        if (cellVal === 'points (hunt)' || cellVal === 'points') pointsIdx = c;
+                        const val = String(row[c]).trim().toLowerCase();
+                        if (val === 'user name' || val === 'name' || val === 'нікнейм') nameIdx = c;
+                        if (val === 'вбивства' || val.includes('kills')) killsIdx = c;
+                        if (val === 'попередні вбивства' || val.includes('previous')) prevIdx = c;
+                        if (val === 'різниця вбивств' || val.includes('difference')) diffIdx = c;
                     }
                 }
 
-                const dataMap = new Map();
+                const map = new Map();
                 for (let i = 0; i < rawRows.length; i++) {
                     const row = rawRows[i];
                     if (!row || row.length <= nameIdx) continue;
 
-                    const rawName = String(row[nameIdx] || "").trim();
-                    if (!rawName || 
-                        rawName.toLowerCase() === 'user name' || 
-                        rawName.toLowerCase().includes('total') || 
-                        rawName.toLowerCase().includes('user id')) continue;
+                    const name = String(row[nameIdx] || "").trim();
+                    if (!name || 
+                        name.toLowerCase() === 'user name' || 
+                        name.toLowerCase() === 'name' || 
+                        name.toLowerCase() === 'нікнейм' || 
+                        name.toLowerCase().includes('total') || 
+                        name.toLowerCase().includes('user id')) continue;
 
-                    const points = parseFloat(row[pointsIdx]) || 0;
-                    dataMap.set(rawName.toLowerCase(), { originalName: rawName, points: points });
+                    const kills = parseFloat(row[killsIdx]) || 0;
+                    const prevKills = parseFloat(row[prevIdx]) || 0;
+                    let diff = parseFloat(row[diffIdx]);
+                    if (isNaN(diff)) diff = kills - prevKills;
+
+                    map.set(name.toLowerCase(), { name, kills, prevKills, diff });
                 }
 
-                if (type === 'past') {
-                    pastDataMap = dataMap;
-                    document.getElementById('statusFile1').innerText = `✅ Завантажено (${dataMap.size} гравців)`;
+                if (fileNumber === 1) {
+                    file1Map = map;
+                    document.getElementById('statusFile1').innerText = `✅ Завантажено (${map.size})`;
                     document.getElementById('statusFile1').className = 'text-xs text-emerald-400 font-semibold';
                 } else {
-                    currentDataMap = dataMap;
-                    document.getElementById('statusFile2').innerText = `✅ Завантажено (${dataMap.size} гравців)`;
+                    file2Map = map;
+                    document.getElementById('statusFile2').innerText = `✅ Завантажено (${map.size})`;
                     document.getElementById('statusFile2').className = 'text-xs text-emerald-400 font-semibold';
                 }
 
-                if (pastDataMap.size > 0 && currentDataMap.size > 0) {
-                    processComparison();
-                }
+                processData();
             };
             reader.readAsArrayBuffer(file);
         }
 
-        function processComparison() {
-            if (!pastDataMap.size || !currentDataMap.size) return;
+        function processData() {
+            if (file1Map.size === 0 && file2Map.size === 0) return;
 
-            const norm = parseFloat(document.getElementById('normInput').value) || 42;
-            const allPlayerKeys = new Set([...pastDataMap.keys(), ...currentDataMap.keys()]);
+            const isComparisonMode = file1Map.size > 0 && file2Map.size > 0;
+            const badge = document.getElementById('modeBadge');
 
-            comparisonList = [];
+            if (isComparisonMode) {
+                badge.innerText = 'Режим: Порівняння 2 періодів';
+                badge.className = 'bg-amber-500/20 text-amber-400 text-xs px-3 py-1.5 rounded-full border border-amber-500/30 font-semibold';
+                
+                const allKeys = new Set([...file1Map.keys(), ...file2Map.keys()]);
+                combinedData = [];
 
-            allPlayerKeys.forEach(key => {
-                const past = pastDataMap.get(key);
-                const curr = currentDataMap.get(key);
+                allKeys.forEach(k => {
+                    const f1 = file1Map.get(k);
+                    const f2 = file2Map.get(k);
 
-                const name = curr ? curr.originalName : past.originalName;
-                const pastPoints = past ? past.points : 0;
-                const currentPoints = curr ? curr.points : 0;
-                const diff = currentPoints - pastPoints;
+                    const name = f2 ? f2.name : f1.name;
+                    const f1Diff = f1 ? f1.diff : 0;
+                    const f2Diff = f2 ? f2.diff : 0;
+                    const growth = f2Diff - f1Diff; // Динаміка приросту
 
-                const wasDebtor = pastPoints < norm;
-                const isDebtor = currentPoints < norm;
-
-                comparisonList.push({
-                    name,
-                    pastPoints,
-                    currentPoints,
-                    diff,
-                    wasDebtor,
-                    isDebtor,
-                    isRepeatDebtor: wasDebtor && isDebtor,
-                    isNewDebtor: !wasDebtor && isDebtor,
-                    isImproved: diff > 0,
-                    isWorsened: diff < 0
+                    combinedData.push({
+                        name,
+                        f1Diff,
+                        f2Diff,
+                        growth,
+                        diff: f2Diff // Основний показник для сортування за замовчуванням
+                    });
                 });
-            });
+            } else {
+                badge.innerText = 'Режим: Перегляд 1 файлу';
+                badge.className = 'bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-full border border-emerald-500/30 font-semibold';
 
+                const targetMap = file1Map.size > 0 ? file1Map : file2Map;
+                combinedData = Array.from(targetMap.values());
+            }
+
+            document.getElementById('controlsPanel').classList.remove('hidden');
             document.getElementById('statsGrid').classList.remove('hidden');
-            document.getElementById('actionsPanel').classList.remove('hidden');
             document.getElementById('tableContainer').classList.remove('hidden');
 
             renderTable();
@@ -231,7 +225,7 @@
 
         function setSortKey(key) {
             if (currentSortKey === key) {
-                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
             } else {
                 currentSortKey = key;
                 currentSortOrder = 'desc';
@@ -239,82 +233,126 @@
             renderTable();
         }
 
-        function renderTable() {
-            if (!comparisonList.length) return;
-
+        function getFilteredData() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filterTrend = document.getElementById('filterTrendSelect').value;
+            const filterActivity = document.getElementById('filterActivitySelect').value;
+            const isComparison = file1Map.size > 0 && file2Map.size > 0;
 
-            let filtered = comparisonList.filter(p => {
-                const matchesSearch = p.name.toLowerCase().includes(searchTerm);
+            return combinedData.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm);
                 if (!matchesSearch) return false;
 
-                if (filterTrend === 'repeat_debtors') return p.isRepeatDebtor;
-                if (filterTrend === 'improved') return p.isImproved;
-                if (filterTrend === 'worsened') return p.isWorsened;
-                if (filterTrend === 'new_debtors') return p.isNewDebtor;
+                const primaryVal = isComparison ? item.f2Diff : item.diff;
+                if (filterActivity === 'active') return primaryVal > 0;
+                if (filterActivity === 'zero') return primaryVal <= 0;
                 return true;
             });
+        }
+
+        function renderTable() {
+            if (!combinedData.length) return;
+
+            const isComparison = file1Map.size > 0 && file2Map.size > 0;
+            let filtered = getFilteredData();
 
             // Сортування
             filtered.sort((a, b) => {
-                let valA = a[currentSortKey];
-                let valB = b[currentSortKey];
+                let valA = a[currentSortKey] !== undefined ? a[currentSortKey] : 0;
+                let valB = b[currentSortKey] !== undefined ? b[currentSortKey] : 0;
+
                 if (typeof valA === 'string') {
                     return currentSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 }
                 return currentSortOrder === 'asc' ? valA - valB : valB - valA;
             });
 
-            // Загальна статистика
-            const repeatDebtorsCount = comparisonList.filter(p => p.isRepeatDebtor).length;
-            const growthCount = comparisonList.filter(p => p.isImproved).length;
-            const totalDiffSum = comparisonList.reduce((acc, curr) => acc + curr.diff, 0);
-            const avgDiff = comparisonList.length ? (totalDiffSum / comparisonList.length).toFixed(1) : 0;
+            // Оновлення шапки таблиці
+            const thead = document.getElementById('tableHead');
+            const arrow = (key) => currentSortKey === key ? (currentSortOrder === 'desc' ? ' ▼' : ' ▲') : '';
 
-            document.getElementById('statTotal').innerText = comparisonList.length;
-            document.getElementById('statRepeatDebtors').innerText = repeatDebtorsCount;
-            document.getElementById('statGrowth').innerText = growthCount;
-            document.getElementById('statAvgDiff').innerText = (avgDiff >= 0 ? '+' : '') + avgDiff;
-
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = filtered.map((p, idx) => `
-                <tr class="hover:bg-slate-700/30 transition-colors">
-                    <td class="px-4 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
-                    <td class="px-4 py-3 font-medium text-white">${escapeHtml(p.name)}</td>
-                    <td class="px-4 py-3 text-center font-mono ${p.wasDebtor ? 'text-rose-400' : 'text-slate-300'}">${p.pastPoints}</td>
-                    <td class="px-4 py-3 text-center font-mono font-bold ${p.isDebtor ? 'text-rose-400' : 'text-emerald-400'}">${p.currentPoints}</td>
-                    <td class="px-4 py-3 text-center font-mono font-semibold ${p.diff > 0 ? 'text-emerald-400' : p.diff < 0 ? 'text-rose-400' : 'text-slate-400'}">
-                        ${p.diff > 0 ? '+' + p.diff : p.diff}
-                    </td>
-                    <td class="px-4 py-3 text-center text-xs">
-                        ${p.isRepeatDebtor 
-                            ? `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">2-й тиждень борг</span>`
-                            : p.isNewDebtor 
-                            ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Новий борг</span>`
-                            : p.isDebtor 
-                            ? `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full">Борг</span>`
-                            : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">Норма ОК</span>`}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function copyRepeatDebtors() {
-            const repeatList = comparisonList.filter(p => p.isRepeatDebtor).sort((a, b) => a.currentPoints - b.currentPoints);
-            if (!repeatList.length) {
-                alert('Хронічних боржників не знайдено!');
-                return;
+            if (isComparison) {
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-5 py-3 text-center w-12">#</th>
+                        <th class="px-5 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм${arrow('name')}</th>
+                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('f1Diff')">Звіт 1 (+Кіли)${arrow('f1Diff')}</th>
+                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('f2Diff')">Звіт 2 (+Кіли)${arrow('f2Diff')}</th>
+                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('growth')">Динаміка${arrow('growth')}</th>
+                    </tr>
+                `;
+            } else {
+                thead.innerHTML = `
+                    <tr>
+                        <th class="px-5 py-3 text-center w-12">#</th>
+                        <th class="px-5 py-3 cursor-pointer hover:text-white" onclick="setSortKey('name')">Нікнейм${arrow('name')}</th>
+                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('kills')">Вбивства (G)${arrow('kills')}</th>
+                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('prevKills')">Попередні (H)${arrow('prevKills')}</th>
+                        <th class="px-5 py-3 text-right cursor-pointer hover:text-white" onclick="setSortKey('diff')">Різниця (I)${arrow('diff')}</th>
+                    </tr>
+                `;
             }
 
-            let text = `🚨 *ХРОНІЧНІ БОРЖНИКИ (НЕ ЗДАЛИ НОРМУ 2 ТИЖНІ ПОСПІЛЬ)*\n----------------------------------\n`;
-            repeatList.forEach((d, i) => {
-                text += `${i + 1}. ${d.name} — мин. тижд: ${d.pastPoints} | цей тижд: ${d.currentPoints}\n`;
+            // Статистика
+            const primaryArray = isComparison ? combinedData.map(d => d.f2Diff) : combinedData.map(d => d.diff);
+            const activeCount = primaryArray.filter(v => v > 0).length;
+            const zeroCount = primaryArray.filter(v => v <= 0).length;
+            const totalDiffSum = primaryArray.reduce((a, b) => a + b, 0);
+
+            document.getElementById('statTotal').innerText = combinedData.length;
+            document.getElementById('statActive').innerText = activeCount;
+            document.getElementById('statZero').innerText = zeroCount;
+            document.getElementById('statDiff').innerText = (totalDiffSum >= 0 ? '+' : '') + totalDiffSum.toLocaleString();
+
+            // Тіло таблиці
+            const tbody = document.getElementById('tableBody');
+            if (isComparison) {
+                tbody.innerHTML = filtered.map((p, idx) => `
+                    <tr class="hover:bg-slate-700/30 transition-colors">
+                        <td class="px-5 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
+                        <td class="px-5 py-3 font-medium text-white">${escapeHtml(p.name)}</td>
+                        <td class="px-5 py-3 text-right font-mono text-slate-300">${p.f1Diff > 0 ? '+' : ''}${p.f1Diff.toLocaleString()}</td>
+                        <td class="px-5 py-3 text-right font-mono font-bold ${p.f2Diff > 0 ? 'text-emerald-400' : 'text-slate-400'}">${p.f2Diff > 0 ? '+' : ''}${p.f2Diff.toLocaleString()}</td>
+                        <td class="px-5 py-3 text-right font-mono font-semibold ${p.growth > 0 ? 'text-emerald-400' : p.growth < 0 ? 'text-rose-400' : 'text-slate-400'}">
+                            ${p.growth > 0 ? '+' : ''}${p.growth.toLocaleString()}
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = filtered.map((p, idx) => `
+                    <tr class="hover:bg-slate-700/30 transition-colors">
+                        <td class="px-5 py-3 text-center text-slate-500 font-mono text-xs">${idx + 1}</td>
+                        <td class="px-5 py-3 font-medium text-white">${escapeHtml(p.name)}</td>
+                        <td class="px-5 py-3 text-right font-mono text-slate-300">${p.kills.toLocaleString()}</td>
+                        <td class="px-5 py-3 text-right font-mono text-slate-400">${p.prevKills.toLocaleString()}</td>
+                        <td class="px-5 py-3 text-right font-mono font-bold ${p.diff > 0 ? 'text-emerald-400' : p.diff < 0 ? 'text-rose-400' : 'text-slate-400'}">
+                            ${p.diff > 0 ? '+' : ''}${p.diff.toLocaleString()}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function copyTableData() {
+            const filtered = getFilteredData();
+            if (!filtered.length) return alert('Список порожній!');
+
+            const isComparison = file1Map.size > 0 && file2Map.size > 0;
+            let text = isComparison 
+                ? `⚔️ *ПОРІВНЯННЯ РІЗНИЦІ ВБИВСТВ (2 ПЕРІОДИ)*\n----------------------------------\n`
+                : `⚔️ *СТАТИСТИКА ВБИВСТВ*\n----------------------------------\n`;
+
+            filtered.forEach((p, i) => {
+                if (isComparison) {
+                    text += `${i + 1}. ${p.name} — Звіт 1: +${p.f1Diff.toLocaleString()} | Звіт 2: +${p.f2Diff.toLocaleString()} (${p.growth >= 0 ? '+' : ''}${p.growth.toLocaleString()})\n`;
+                } else {
+                    text += `${i + 1}. ${p.name} – ${p.diff > 0 ? '+' : ''}${p.diff.toLocaleString()}\n`;
+                }
             });
-            text += `----------------------------------\nВсього: ${repeatList.length} осіб.`;
+
+            text += `----------------------------------\nВсього: ${filtered.length} осіб.`;
 
             navigator.clipboard.writeText(text).then(() => {
-                const btn = document.getElementById('copyRepeatBtn');
+                const btn = document.getElementById('copyListBtn');
                 const orig = btn.innerHTML;
                 btn.innerHTML = '✅ Скопійовано!';
                 setTimeout(() => { btn.innerHTML = orig; }, 2000);
